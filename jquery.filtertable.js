@@ -35,7 +35,6 @@
             return function(a) {
                 var found = false;
                 $.each(args, function(j, v) {
-                   // if ($(a).text().toUpperCase().indexOf(v.toUpperCase()) >= 0) {
                     if (isMatch(a,v)){
                         found = true;
                         return false;
@@ -61,7 +60,6 @@
             return function(a) {
                 var found = 0; // how many terms were found?
                 $.each(args, function(j, v) {
-                    //if ($(a).text().toUpperCase().indexOf(v.toUpperCase()) >= 0) {
                     if (isMatch(a,v)) {
                         found++; // found another term
                     
@@ -74,14 +72,6 @@
         $.expr[':'].filterTableFind = jQuery.expr.createPseudo(function(arg) {
             return function(el) {
                return  isMatch(el,arg);
-              /* var res = $(el).text().toUpperCase().indexOf(arg.toUpperCase()) >= 0;
-               if (res == false){
-                if ($(el).data("filtertablekeywords") != undefined){
-
-                res = $(el).data("filtertablekeywords").toUpperCase().indexOf(arg.toUpperCase()) >= 0;
-                }
-               }
-               return res;*/
             };
         });
         $.expr[':'].filterTableFindAny = jQuery.expr.createPseudo(function(arg) {
@@ -101,7 +91,6 @@
             return function(el) {
                 var found = false;
                 $.each(args, function(i, v) {
-                    //if ($(el).text().toUpperCase().indexOf(v.toUpperCase()) >= 0) {
                     if(isMatch(el, v)){
                         found = true;
                         return false; // short-circuit the searching since this cell has one of the terms
@@ -127,7 +116,6 @@
             return function(el) {
                 var found = 0; // how many terms were found?
                 $.each(args, function(i, v) {
-                    //if ($(el).text().toUpperCase().indexOf(v.toUpperCase()) >= 0) {
                     if(isMatch(el,v)){
                         found++; // found another term
                     
@@ -138,15 +126,15 @@
         });
     }
     var isMatch = function(element, searchString){
-               var result = $(element).text().toUpperCase().indexOf(searchString.toUpperCase()) >= 0;
-               if (result == false){
-                if ($(element).data("filtertablekeywords") != undefined){
-
-                result = $(element).data("filtertablekeywords").toUpperCase().indexOf(searchString.toUpperCase()) >= 0;
-                }
-               }
-               return result;
+       var result = $(element).text().toUpperCase().indexOf(searchString.toUpperCase()) >= 0;
+       if (result == false){
+         if ($(element).data("filtertablekeywords") != undefined){
+           result = $(element).data("filtertablekeywords").toUpperCase().indexOf(searchString.toUpperCase()) >= 0;
+         }
+       }
+       return result;
     }
+    
     $.fn.filterTable = function(options) { // define the filterTable plugin
         var defaults = { // start off with some default settings
                 autofocus:         false,               // make the filter input field autofocused (not recommended for accessibility)
