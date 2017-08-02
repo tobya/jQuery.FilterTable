@@ -6,6 +6,8 @@ One can also define clickable shortcuts for commonly used terms.
 
 See the demos at http://sunnywalker.github.com/jQuery.FilterTable
 
+The main difference between this repo and the main repo at https://github.com/sunnywalker/jQuery.FilterTable is the addition of the data-filterTableKeywords attribute which allows you to add arbitrary values to filter.  This has been submitted as a PR https://github.com/sunnywalker/jQuery.FilterTable/pull/43 but has not be merged.
+
 ## Usage
 
 Include the dependencies:
