@@ -6,23 +6,26 @@
  *
  * Utilizes bindWithDelay() if available. https://github.com/bgrins/bindWithDelay
  *
- * @version v1.5.5
+ * @version v1.5.7
  * @author Sunny Walker, swalker@hawaii.edu
  * @license MIT
  */
-(function($) {
+(function ($) {
     var jversion = $.fn.jquery.split('.'),
         jmajor = parseFloat(jversion[0]),
         jminor = parseFloat(jversion[1]);
-    if (jmajor < 2 && jminor < 8) { // build the pseudo selector for jQuery < 1.8
-        $.expr[':'].filterTableFind = function(a, i, m) { // build the case insensitive filtering functionality as a pseudo-selector expression
-            return $(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
+    // build the pseudo selector for jQuery < 1.8
+    if (jmajor < 2 && jminor < 8) {
+        // build the case insensitive filtering functionality as a pseudo-selector expression
+        $.expr[':'].filterTableFind = function (a, i, m) {
+            return $(a).text().toUpperCase().indexOf(m[3].toUpperCase().replace(/"""/g, '"').replace(/"\\"/g, "\\")) >= 0;
         };
-        $.expr[':'].filterTableFindAny = function(a, i, m) { // build the case insensitive all-words filtering functionality as a pseudo-selector expression
+        // build the case insensitive all-words filtering functionality as a pseudo-selector expression
+        $.expr[':'].filterTableFindAny = function (a, i, m) {
             // build an array of each non-falsey value passed
             var raw_args = m[3].split(/[\s,]/),
                 args = [];
-            $.each(raw_args, function(j, v) {
+            $.each(raw_args, function (j, v) {
                 var t = v.replace(/^\s+|\s$/g, '');
                 if (t) {
                     args.push(t);
@@ -32,7 +35,7 @@
             if (!args.length) {
                 return false;
             }
-            return function(a) {
+            return function (a) {
                 var found = false;
                 $.each(args, function(j, v) {
                     if (isMatch(a,v)){
@@ -43,11 +46,12 @@
                 return found;
             };
         };
-        $.expr[':'].filterTableFindAll = function(a, i, m) { // build the case insensitive all-words filtering functionality as a pseudo-selector expression
+        // build the case insensitive all-words filtering functionality as a pseudo-selector expression
+        $.expr[':'].filterTableFindAll = function (a, i, m) {
             // build an array of each non-falsey value passed
             var raw_args = m[3].split(/[\s,]/),
                 args = [];
-            $.each(raw_args, function(j, v) {
+            $.each(raw_args, function (j, v) {
                 var t = v.replace(/^\s+|\s$/g, '');
                 if (t) {
                     args.push(t);
@@ -61,8 +65,7 @@
                 var found = 0; // how many terms were found?
                 $.each(args, function(j, v) {
                     if (isMatch(a,v)) {
-                        found++; // found another term
-                    
+                        found++; // found another term                   
                     }
                 });
                 return found === args.length; // did we find all of them in this cell?
@@ -74,12 +77,13 @@
                return  isMatch(el,arg);
             };
         });
-        $.expr[':'].filterTableFindAny = jQuery.expr.createPseudo(function(arg) {
+        $.expr[':'].filterTableFindAny = jQuery.expr.createPseudo(function (arg) {
             // build an array of each non-falsey value passed
             var raw_args = arg.split(/[\s,]/),
                 args = [];
-            $.each(raw_args, function(i, v) {
-                var t = v.replace(/^\s+|\s$/g, ''); // trim the string
+            $.each(raw_args, function (i, v) {
+                // trim the string
+                var t = v.replace(/^\s+|\s$/g, '');
                 if (t) {
                     args.push(t);
                 }
@@ -88,7 +92,7 @@
             if (!args.length) {
                 return false;
             }
-            return function(el) {
+            return function (el) {
                 var found = false;
                 $.each(args, function(i, v) {
                     if(isMatch(el, v)){
@@ -99,12 +103,13 @@
                 return found;
             };
         });
-        $.expr[':'].filterTableFindAll = jQuery.expr.createPseudo(function(arg) {
+        $.expr[':'].filterTableFindAll = jQuery.expr.createPseudo(function (arg) {
             // build an array of each non-falsey value passed
             var raw_args = arg.split(/[\s,]/),
                 args = [];
-            $.each(raw_args, function(i, v) {
-                var t = v.replace(/^\s+|\s$/g, ''); // trim the string
+            $.each(raw_args, function (i, v) {
+                // trim the string
+                var t = v.replace(/^\s+|\s$/g, '');
                 if (t) {
                     args.push(t);
                 }
@@ -117,117 +122,183 @@
                 var found = 0; // how many terms were found?
                 $.each(args, function(i, v) {
                     if(isMatch(el,v)){
-                        found++; // found another term
-                    
+                        found++; // found another term                    
                     }
                 });
-                return found === args.length; // did we find all of them in this cell?
+                // did we find all of them in this cell?
+                return found === args.length;
             };
         });
     }
-    var isMatch = function(element, searchString){
-       var result = $(element).text().toUpperCase().indexOf(searchString.toUpperCase()) >= 0;
-       if (result == false){
-         if ($(element).data("filtertablekeywords") != undefined){
-           result = $(element).data("filtertablekeywords").toUpperCase().indexOf(searchString.toUpperCase()) >= 0;
-         }
-       }
-       return result;
-    }
-    
-    $.fn.filterTable = function(options) { // define the filterTable plugin
-        var defaults = { // start off with some default settings
-                autofocus:         false,               // make the filter input field autofocused (not recommended for accessibility)
-                callback:          null,                // callback function: function(term, table){}
-                containerClass:    'filter-table',      // class to apply to the container
-                containerTag:      'p',                 // tag name of the container
-                filterExpression:  'filterTableFind',   // jQuery expression method to use for filtering
-                hideTFootOnFilter: false,               // if true, the table's tfoot(s) will be hidden when the table is filtered
-                highlightClass:    'alt',               // class applied to cells containing the filter term
-                ignoreClass:       '',                  // don't filter the contents of cells with this class
-                ignoreColumns:     [],                  // don't filter the contents of these columns
-                inputSelector:     null,                // use the element with this selector for the filter input field instead of creating one
-                inputName:         '',                  // name of filter input field
-                inputType:         'search',            // tag name of the filter input tag
-                label:             'Filter:',           // text to precede the filter input tag
-                minChars:          1,                   // filter only when at least this number of characters are in the filter input field
-                minRows:           8,                   // don't show the filter on tables with at least this number of rows
-                placeholder:       'search this table', // HTML5 placeholder text for the filter field
-                preventReturnKey:  true,                // prevent the return key in the filter input field from trigger form submits
-                quickList:         [],                  // list of phrases to quick fill the search
-                quickListClass:    'quick',             // class of each quick list item
-                quickListGroupTag: '',                  // tag surrounding quick list items (e.g., ul)
-                quickListTag:      'a',                 // tag type of each quick list item (e.g., a or li)
-                visibleClass:      'visible'            // class applied to visible rows
+    // define the filterTable plugin
+    $.fn.filterTable = function (options) {
+        // start off with some default settings
+        var defaults = {
+                // make the filter input field autofocused (not recommended for accessibility)
+                autofocus: false,
+
+                // callback function: function (term, table){}
+                callback: null,
+
+                // class to apply to the container
+                containerClass: 'filter-table',
+
+                // tag name of the container
+                containerTag: 'p',
+
+                // jQuery expression method to use for filtering
+                filterExpression: 'filterTableFind',
+
+                // if true, the table's tfoot(s) will be hidden when the table is filtered
+                hideTFootOnFilter: false,
+
+                // class applied to cells containing the filter term
+                highlightClass: 'alt',
+
+                // don't filter the contents of cells with this class
+                ignoreClass: '',
+
+                // don't filter the contents of these columns
+                ignoreColumns: [],
+
+                // use the element with this selector for the filter input field instead of creating one
+                inputSelector: null,
+
+                // name of filter input field
+                inputName: '',
+
+                // tag name of the filter input tag
+                inputType: 'search',
+
+                // text to precede the filter input tag
+                label: 'Filter:',
+
+                // filter only when at least this number of characters are in the filter input field
+                minChars: 1,
+
+                // don't show the filter on tables with at least this number of rows
+                minRows: 8,
+
+                // HTML5 placeholder text for the filter field
+                placeholder: 'search this table',
+
+                // prevent the return key in the filter input field from trigger form submits
+                preventReturnKey: true,
+
+                // list of phrases to quick fill the search
+                quickList: [],
+
+                // class of each quick list item
+                quickListClass: 'quick',
+
+                // quick list item label to clear the filter (e.g., '&times; Clear filter')
+                quickListClear: '',
+
+                // tag surrounding quick list items (e.g., ul)
+                quickListGroupTag: '',
+
+                // tag type of each quick list item (e.g., a or li)
+                quickListTag: 'a',
+
+                // class applied to visible rows
+                visibleClass: 'visible'
             },
-            hsc = function(text) { // mimic PHP's htmlspecialchars() function
+            // mimic PHP's htmlspecialchars() function
+            hsc = function (text) {
                 return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             },
-            settings = $.extend({}, defaults, options); // merge the user's settings into the defaults
+            // merge the user's settings into the defaults
+            settings = $.extend({}, defaults, options);
 
-        var doFiltering = function(table, q) { // handle the actual table filtering
-                var tbody = table.find('tbody'); // cache the tbody element
-                if (q === '' || q.length < settings.minChars) { // if the filtering query is blank or the number of chars is less than the minChars option
-                    tbody.find('tr').show().addClass(settings.visibleClass); // show all rows
-                    tbody.find('td').removeClass(settings.highlightClass); // remove the row highlight from all cells
-                    if (settings.hideTFootOnFilter) { // show footer if the setting was specified
+        // handle the actual table filtering
+        var doFiltering = function (table, q) {
+                // cache the tbody element
+                var tbody = table.find('tbody');
+                // if the filtering query is blank or the number of chars is less than the minChars option
+                if (q === '' || q.length < settings.minChars) {
+                    // show all rows
+                    tbody.find('tr').show().addClass(settings.visibleClass);
+                    // remove the row highlight from all cells
+                    tbody.find('td').removeClass(settings.highlightClass);
+                    // show footer if the setting was specified
+                    if (settings.hideTFootOnFilter) {
                         table.find('tfoot').show();
                     }
-                } else { // if the filter query is not blank
+                } else {
+                    // if the filter query is not blank
                     var all_tds = tbody.find('td');
-                    tbody.find('tr').hide().removeClass(settings.visibleClass); // hide all rows, assuming none were found
-                    all_tds.removeClass(settings.highlightClass); // remove previous highlights
-                    if (settings.hideTFootOnFilter) { // hide footer if the setting was specified
+                    // hide all rows, assuming none were found
+                    tbody.find('tr').hide().removeClass(settings.visibleClass);
+                    // remove previous highlights
+                    all_tds.removeClass(settings.highlightClass);
+                    // hide footer if the setting was specified
+                    if (settings.hideTFootOnFilter) {
                         table.find('tfoot').hide();
                     }
                     if (settings.ignoreColumns.length) {
                         var tds = [];
                         if (settings.ignoreClass) {
-                            all_tds = all_tds.not('.'+settings.ignoreClass);
+                            all_tds = all_tds.not('.' + settings.ignoreClass);
                         }
-                        tds = all_tds.filter(':'+settings.filterExpression+'("'+q.replace(/(['"])/g, '\\$1')+'")');
-                        tds.each(function() {
+                        tds = all_tds.filter(':' + settings.filterExpression + '("' + q + '")');
+                        tds.each(function () {
                             var t = $(this),
                                 col = t.parent().children().index(t);
-                            //window.console.log(t.text(), col);
                             if ($.inArray(col, settings.ignoreColumns) === -1) {
-                                //window.console.log(t.text(), $.inArray(col, settings.ignoreColumns));
                                 t.addClass(settings.highlightClass).closest('tr').show().addClass(settings.visibleClass);
                             }
                         });
                     } else {
                         if (settings.ignoreClass) {
-                            all_tds = all_tds.not('.'+settings.ignoreClass);
+                            all_tds = all_tds.not('.' + settings.ignoreClass);
                         }
-                        all_tds.filter(':'+settings.filterExpression+'("'+q.replace(/(['"])/g, '\\$1')+'")').addClass(settings.highlightClass).closest('tr').show().addClass(settings.visibleClass); // highlight (class=alt) only the cells that match the query and show their rows
+                        // highlight (class=alt) only the cells that match the query and show their rows
+                        all_tds.filter(':' + settings.filterExpression + '("' + q + '")').addClass(settings.highlightClass).closest('tr').show().addClass(settings.visibleClass);
                     }
                 }
-                if (settings.callback) { // call the callback function
+                // call the callback function
+                if (settings.callback) {
                     settings.callback(q, table);
                 }
             }; // doFiltering()
 
-        return this.each(function() {
-            var t = $(this), // cache the table
-                tbody = t.find('tbody'), // cache the tbody
-                container = null, // placeholder for the filter field container DOM node
-                quicks = null, // placeholder for the quick list items
-                filter = null, // placeholder for the field field DOM node
-                created_filter = true; // was the filter created or chosen from an existing element?
-            if (t[0].nodeName === 'TABLE' && tbody.length > 0 && (settings.minRows === 0 || (settings.minRows > 0 && tbody.find('tr').length >= settings.minRows)) && !t.prev().hasClass(settings.containerClass)) { // only if object is a table and there's a tbody and at least minRows trs and hasn't already had a filter added
-                if (settings.inputSelector && $(settings.inputSelector).length === 1) { // use a single existing field as the filter input field
+        return this.each(function () {
+            // cache the table
+            var t = $(this),
+                // cache the tbody
+                tbody = t.find('tbody'),
+                // placeholder for the filter field container DOM node
+                container = null,
+                // placeholder for the quick list items
+                quicks = null,
+                // placeholder for the field field DOM node
+                filter = null,
+                // was the filter created or chosen from an existing element?
+                created_filter = true;
+
+            // only if object is a table and there's a tbody and at least minRows trs and hasn't already had a filter added
+            if (t[0].nodeName === 'TABLE' && tbody.length > 0 && (settings.minRows === 0 || (settings.minRows > 0 && tbody.find('tr').length >= settings.minRows)) && !t.prev().hasClass(settings.containerClass)) {
+                // use a single existing field as the filter input field
+                if (settings.inputSelector && $(settings.inputSelector).length === 1) {
                     filter = $(settings.inputSelector);
-                    container = filter.parent(); // container to hold the quick list options
+                    // container to hold the quick list options
+                    container = filter.parent();
                     created_filter = false;
-                } else { // create the filter input field (and container)
-                    container = $('<'+settings.containerTag+' />'); // build the container tag for the filter field
-                    if (settings.containerClass !== '') { // add any classes that need to be added
+                } else {
+                    // create the filter input field (and container)
+                    // build the container tag for the filter field
+                    container = $('<' + settings.containerTag + ' />');
+                    // add any classes that need to be added
+                    if (settings.containerClass !== '') {
                         container.addClass(settings.containerClass);
                     }
-                    container.prepend(settings.label+' '); // add the label for the filter field
-                    filter = $('<input type="'+settings.inputType+'" placeholder="'+settings.placeholder+'" name="'+settings.inputName+'" />'); // build the filter field
-                    if (settings.preventReturnKey) { // prevent return in the filter field from submitting any forms
-                        filter.on('keydown', function(ev) {
+                    // add the label for the filter field
+                    container.prepend(settings.label + ' ');
+                    // build the filter field
+                    filter = $('<input type="' + settings.inputType + '" placeholder="' + settings.placeholder + '" name="' + settings.inputName + '" />');
+                    // prevent return in the filter field from submitting any forms
+                    if (settings.preventReturnKey) {
+                        filter.on('keydown', function (ev) {
                             if ((ev.keyCode || ev.which) === 13) {
                                 ev.preventDefault();
                                 return false;
@@ -235,46 +306,91 @@
                         });
                     }
                 }
-                if (settings.autofocus) { // add the autofocus attribute if requested
+
+                // add the autofocus attribute if requested
+                if (settings.autofocus) {
                     filter.attr('autofocus', true);
                 }
-                if ($.fn.bindWithDelay) { // does bindWithDelay() exist?
-                    filter.bindWithDelay('keyup', function() { // bind doFiltering() to keyup (delayed)
+
+                // does bindWithDelay() exist?
+                if ($.fn.bindWithDelay) {
+                    // bind doFiltering() to keyup (delayed)
+                    filter.bindWithDelay('keyup', function () {
                         doFiltering(t, $(this).val());
                     }, 200);
-                } else { // just bind to onKeyUp
-                    filter.bind('keyup', function() { // bind doFiltering() to keyup
+                } else {
+                    // just bind to onKeyUp
+                    // bind doFiltering() to keyup
+                    filter.bind('keyup', function () {
                         doFiltering(t, $(this).val());
                     });
-                } // keyup binding block
-                filter.bind('click search input paste blur', function() { // bind doFiltering() to additional events
+                }
+
+                // bind doFiltering() to additional events
+                filter.bind('click search input paste blur', function () {
                     doFiltering(t, $(this).val());
                 });
-                if (created_filter) { // add the filter field to the container if it was created by the plugin
+
+                // add the filter field to the container if it was created by the plugin
+                if (created_filter) {
                     container.append(filter);
                 }
-                if (settings.quickList.length>0) { // are there any quick list items to add?
-                    quicks = settings.quickListGroupTag ? $('<'+settings.quickListGroupTag+' />') : container;
-                    $.each(settings.quickList, function(index, value) { // for each quick list item...
-                        var q = $('<'+settings.quickListTag+' class="'+settings.quickListClass+'" />'); // build the quick list item link
-                        q.text(hsc(value)); // add the item's text
+
+                // are there any quick list items to add?
+                if (settings.quickList.length > 0 || settings.quickListClear) {
+                    quicks = settings.quickListGroupTag ? $('<' + settings.quickListGroupTag + ' />') : container;
+                    // for each quick list item...
+                    $.each(settings.quickList, function (index, value) {
+                        // build the quick list item link
+                        var q = $('<' + settings.quickListTag + ' class="' + settings.quickListClass + '" />');
+                        // add the item's text
+                        q.text(hsc(value));
                         if (q[0].nodeName === 'A') {
-                            q.attr('href', '#'); // add a (worthless) href to the item if it's an anchor tag so that it gets the browser's link treatment
+                            // add a (worthless) href to the item if it's an anchor tag so that it gets the browser's link treatment
+                            q.attr('href', '#');
                         }
-                        q.bind('click', function(e) { // bind the click event to it
-                            e.preventDefault(); // stop the normal anchor tag behavior from happening
-                            filter.val(value).focus().trigger('click'); // send the quick list value over to the filter field and trigger the event
+                        // bind the click event to it
+                        q.bind('click', function (e) {
+                            // stop the normal anchor tag behavior from happening
+                            e.preventDefault();
+                            // send the quick list value over to the filter field and trigger the event
+                            filter.val(value).focus().trigger('click');
                         });
-                        quicks.append(q); // add the quick list link to the quick list groups container
-                    }); // each quick list item
-                    if (quicks !== container) {
-                        container.append(quicks); // add the quick list groups container to the DOM if it isn't already there
+                        // add the quick list link to the quick list groups container
+                        quicks.append(q);
+                    });
+
+                    // add the quick list clear item if a label has been specified
+                    if (settings.quickListClear) {
+                        // build the clear item
+                        var q = $('<' + settings.quickListTag + ' class="' + settings.quickListClass + '" />');
+                        // add the label text
+                        q.html(settings.quickListClear);
+                        if (q[0].nodeName === 'A') {
+                            // add a (worthless) href to the item if it's an anchor tag so that it gets the browser's link treatment
+                            q.attr('href', '#');
+                        }
+                        // bind the click event to it
+                        q.bind('click', function (e) {
+                            e.preventDefault();
+                            // clear the quick list value and trigger the event
+                            filter.val('').focus().trigger('click');
+                        });
+                        // add the clear item to the quick list groups container
+                        quicks.append(q);
                     }
-                } // if quick list items
-                if (created_filter) { // add the filter field and quick list container to just before the table if it was created by the plugin
+
+                    // add the quick list groups container to the DOM if it isn't already there
+                    if (quicks !== container) {
+                        container.append(quicks);
+                    }
+                }
+
+                // add the filter field and quick list container to just before the table if it was created by the plugin
+                if (created_filter) {
                     t.before(container);
                 }
-            } // if the functionality should be added
+            }
         }); // return this.each
     }; // $.fn.filterTable
 })(jQuery);
