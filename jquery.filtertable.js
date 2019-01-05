@@ -103,6 +103,8 @@
                 return found;
             };
         });
+
+
         $.expr[':'].filterTableFindAll = jQuery.expr.createPseudo(function (arg) {
             // build an array of each non-falsey value passed
             var raw_args = arg.split(/[\s,]/),
@@ -129,6 +131,16 @@
                 return found === args.length;
             };
         });
+    }
+
+    var isMatch = function(element, searchString){
+       var result = $(element).text().toUpperCase().indexOf(searchString.toUpperCase()) >= 0;
+       if (result == false){
+         if ($(element).data("filtertablekeywords") != undefined){
+           result = $(element).data("filtertablekeywords").toUpperCase().indexOf(searchString.toUpperCase()) >= 0;
+         }
+       }
+       return result;
     }
     // define the filterTable plugin
     $.fn.filterTable = function (options) {
